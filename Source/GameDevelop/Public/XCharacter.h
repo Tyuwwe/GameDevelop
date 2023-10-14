@@ -4,10 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "XInteractionComponent.h"
 #include "XCharacter.generated.h"
 
 class UCameraComponent;
 class USpringArmComponent;
+class UXInteractionComponent;
+class UAnimMontage;
 
 UCLASS()
 class GAMEDEVELOP_API AXCharacter : public ACharacter
@@ -17,8 +20,13 @@ class GAMEDEVELOP_API AXCharacter : public ACharacter
 
 protected:
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Attack")
 	TSubclassOf<AActor> ProjectileClass;
+
+	UPROPERTY(EditAnywhere, Category = "Attack")
+	UAnimMontage* AttackAnim;
+
+	FTimerHandle TimerHandle_PrimaryAttack;
 
 public:
 	// Sets default values for this character's properties
@@ -32,6 +40,9 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	UCameraComponent* CameraComp;
 
+	UPROPERTY(VisibleAnywhere)
+	UXInteractionComponent* InteractionComp;
+
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
@@ -42,6 +53,10 @@ protected:
 	void PrimaryAttack();
 
 	void PlayerJump();
+	
+	void PrimaryInteract();
+
+	void PrimaryAttack_TimeElapsed();
 
 public:	
 	// Called every frame

@@ -6,6 +6,7 @@
 #include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Actor.h"
+#include "XInteractionComponent.h"
 
 // Sets default values
 AXCharacter::AXCharacter()
@@ -19,6 +20,8 @@ AXCharacter::AXCharacter()
 
 	CameraComp = CreateDefaultSubobject<UCameraComponent>("CameraComp");
 	CameraComp->SetupAttachment(SpringArmComp);
+
+	InteractionComp = CreateDefaultSubobject<UXInteractionComponent>("InteractionComp");
 	
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 
@@ -72,9 +75,34 @@ void AXCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 
 	PlayerInputComponent->BindAction("PrimaryAttack", IE_Pressed, this, &AXCharacter::PrimaryAttack);
 	PlayerInputComponent->BindAction("PlayerJump", IE_Pressed, this, &AXCharacter::PlayerJump);
+
+	PlayerInputComponent->BindAction("PrimaryInteract", IE_Pressed, this, &AXCharacter::PrimaryInteract);
 }
 
 void AXCharacter::PrimaryAttack()
+{
+	PlayAnimMontage(AttackAnim);
+
+	GetWorldTimerManager().SetTimer(TimerHandle_PrimaryAttack, this, &AXCharacter::PrimaryAttack_TimeElapsed, 0.2f);
+	
+	//GetWorldTimerManager().ClearTimer(TimerHandle_PrimaryAttack);
+}
+
+void AXCharacter::PlayerJump()
+{
+	Super::Jump();
+}
+
+void AXCharacter::PrimaryInteract()
+{
+	if (InteractionComp)
+	{
+		InteractionComp->PrimaryInteract();
+	}
+		
+}
+
+void AXCharacter::PrimaryAttack_TimeElapsed()
 {
 	FVector HandLocation = GetMesh()->GetSocketLocation("Muzzle_01");
 
@@ -84,9 +112,4 @@ void AXCharacter::PrimaryAttack()
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
 	GetWorld()->SpawnActor<AActor>(ProjectileClass, SpawnTM, SpawnParams);
-}
-
-void AXCharacter::PlayerJump()
-{
-	Super::Jump();
 }
