@@ -104,12 +104,61 @@ void AXCharacter::PrimaryInteract()
 
 void AXCharacter::PrimaryAttack_TimeElapsed()
 {
+	FCollisionObjectQueryParams ObjectQueryParams;
+	ObjectQueryParams.AddObjectTypesToQuery(ECC_WorldDynamic);
+	ObjectQueryParams.AddObjectTypesToQuery(ECC_WorldStatic);
+	
 	FVector HandLocation = GetMesh()->GetSocketLocation("Muzzle_01");
+	FRotator CamRotation = CameraComp->GetComponentRotation();
+	FVector CamLocation = CameraComp->GetComponentLocation() + CamRotation.Vector() * SpringArmComp->TargetArmLength;
 
-	FTransform SpawnTM = FTransform(GetControlRotation(), HandLocation);
+	FVector EndLocation = CamLocation + CamRotation.Vector() * 1000;
+	FVector AimLocation = EndLocation;
+
+	TArray<FHitResult> Hits;
+	float Radius = 30.0f;
+
+	FCollisionShape Shape;
+	Shape.SetSphere(Radius);
+	bool bCanHit = GetWorld()->SweepMultiByObjectType(Hits, CamLocation, EndLocation, FQuat::Identity, ObjectQueryParams, Shape);
+
+	FColor LineColor = bCanHit ? FColor::Green : FColor::Red;
+	
+	for (FHitResult Hit : Hits)
+	{
+		if(bCanHit)
+		{
+			AimLocation = Hit.ImpactPoint;
+			DrawDebugSphere(GetWorld(), Hit.ImpactPoint, Radius, 32, LineColor, false, 2.0f);
+			break;
+		}
+	}
+
+	FVector LookAtVector = AimLocation - HandLocation;
+	FRotator LookAtRotation = LookAtVector.Rotation();
+	
+	DrawDebugLine(GetWorld(), CamLocation, AimLocation, LineColor, false, 2.0f, 0, 2.0f);
+	FTransform SpawnTM = FTransform(LookAtRotation, HandLocation);
 
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-
+	SpawnParams.Instigator = this;
+	
 	GetWorld()->SpawnActor<AActor>(ProjectileClass, SpawnTM, SpawnParams);
+	
+	//AActor* SpawnedActor =  GetWorld()->SpawnActor<AActor>(ProjectileClass, SpawnTM, SpawnParams);
+	//AXMagicProjectile* SpawnedBall = Cast<AXMagicProjectile>(SpawnedActor);
+
+	//USphereComponent* SpawnedBallSphere = SpawnedBall->GetSphere();
+	//SpawnedBallSphere->SetPhysicsLinearVelocity(CameraComp->GetComponentRotation().Vector()*100);
+}
+
+float AXCharacter::GetSpringArmLength()
+{
+	return SpringArmComp->TargetArmLength;
+}
+
+UCameraComponent* AXCharacter::GetCamera()
+{
+	return CameraComp;
 }

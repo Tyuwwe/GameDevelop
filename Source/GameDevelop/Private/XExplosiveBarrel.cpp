@@ -21,9 +21,10 @@ AXExplosiveBarrel::AXExplosiveBarrel()
 
 	RadialForceComp = CreateDefaultSubobject<URadialForceComponent>("RadialForceComp");
 	RadialForceComp->SetupAttachment(StaticMesh_1);
-	RadialForceComp->ImpulseStrength = 2000.0;
+	RadialForceComp->ImpulseStrength = 2500.0;
 	RadialForceComp->bImpulseVelChange = true;
-	RadialForceComp->Radius = 600.0;
+	RadialForceComp->Radius = 750.0;
+	RadialForceComp->SetAutoActivate(false);
 }
 
 // Called when the game starts or when spawned
@@ -42,6 +43,13 @@ void AXExplosiveBarrel::Tick(float DeltaTime)
 
 void AXExplosiveBarrel::AXOnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
+	float NormalImpulseSize = NormalImpulse.Size();
+	if (NormalImpulseSize > 20000) RadialForceComp->FireImpulse();
+}
+
+void AXExplosiveBarrel::BarrelExplode()
+{
 	RadialForceComp->FireImpulse();
 }
+
 

@@ -4,6 +4,8 @@
 #include "XInteractionComponent.h"
 #include "XGameplayInterface.h"
 #include "DrawDebugHelpers.h"
+#include "XCharacter.h"
+#include "Camera/CameraComponent.h"
 
 // Sets default values for this component's properties
 UXInteractionComponent::UXInteractionComponent()
@@ -39,24 +41,34 @@ void UXInteractionComponent::PrimaryInteract()
 	ObjectQueryParams.AddObjectTypesToQuery(ECC_WorldDynamic);
 
 	AActor* MyOwner = GetOwner();
+	AXCharacter* MyActor = Cast<AXCharacter>(MyOwner);
 
-	FVector EyeLoctation;
-	FRotator EyeRotation;
-	MyOwner->GetActorEyesViewPoint(EyeLoctation, EyeRotation);
+	//FVector EyeLocation;
+	//FRotator EyeRotation;
+	//MyOwner->GetActorEyesViewPoint(EyeLocation, EyeRotation);
+
+	UCameraComponent* CurrentCam = MyActor->GetCamera();
+	FVector CamLocation = CurrentCam->GetComponentLocation();
+	FRotator CamRotation = CurrentCam->GetComponentRotation();
+	//APawn* MyPawn = Cast<APawn>(MyOwner);
+	float SpringArmLength = MyActor->GetSpringArmLength();
 	
-	FVector End = EyeLoctation + (EyeRotation.Vector() * 1000);
+
+	FVector End = CamLocation + (CamRotation.Vector() * 500) + (CamRotation.Vector() * SpringArmLength);
+	FVector Start = CamLocation + (CamRotation.Vector() * SpringArmLength);
+	//FVector End = EyeLocation + (EyeRotation.Vector() * 500);
 
 	//FHitResult Hit;
-	//bool bBlockingHit = GetWorld()->LineTraceSingleByObjectType(Hit, EyeLoctation, End, ObjectQueryParams);
+	//bool bBlockingHit = GetWorld()->LineTraceSingleByObjectType(Hit, EyeLocation, End, ObjectQueryParams);
 
 	TArray<FHitResult> Hits;
 
 	float Radius = 30.0f;
 
 	FCollisionShape Shape;
-	Shape.SetSphere(30.0f);
+	Shape.SetSphere(Radius);
 
-	bool bBlockingHit = GetWorld()->SweepMultiByObjectType(Hits, EyeLoctation, End, FQuat::Identity, ObjectQueryParams, Shape);
+	bool bBlockingHit = GetWorld()->SweepMultiByObjectType(Hits, Start, End, FQuat::Identity, ObjectQueryParams, Shape);
 
 	FColor LineColor = bBlockingHit ? FColor::Green : FColor::Red;
 
@@ -75,6 +87,7 @@ void UXInteractionComponent::PrimaryInteract()
 			}
 		}
 	}
+	DrawDebugLine(GetWorld(), Start, End, LineColor, false, 2.0f, 0, 2.0f);
 
 
 	/*
@@ -89,6 +102,5 @@ void UXInteractionComponent::PrimaryInteract()
 		}
 	}
 	*/
-	DrawDebugLine(GetWorld(), EyeLoctation, End, LineColor, false, 2.0f, 0, 2.0f);
 	
 }

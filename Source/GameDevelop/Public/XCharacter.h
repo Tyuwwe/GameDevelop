@@ -58,7 +58,11 @@ protected:
 
 	void PrimaryAttack_TimeElapsed();
 
-public:	
+public:
+	float GetSpringArmLength();
+
+	UCameraComponent* GetCamera();
+	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 

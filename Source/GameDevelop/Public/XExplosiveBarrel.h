@@ -31,7 +31,9 @@ protected:
 	UFUNCTION()
 	void AXOnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 
-public:	
+public:
+	UFUNCTION(BlueprintCallable, Category = "ExplosiveBarrel")
+	void BarrelExplode();
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 

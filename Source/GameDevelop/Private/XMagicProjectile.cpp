@@ -39,3 +39,7 @@ void AXMagicProjectile::Tick(float DeltaTime)
 
 }
 
+USphereComponent* AXMagicProjectile::GetSphere()
+{
+	return SphereComp;
+}
