@@ -7,6 +7,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Actor.h"
 #include "XInteractionComponent.h"
+#include "XAttributeComponent.h"
 
 // Sets default values
 AXCharacter::AXCharacter()
@@ -26,6 +27,8 @@ AXCharacter::AXCharacter()
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 
 	bUseControllerRotationYaw = false;
+
+	AttributeComp = CreateDefaultSubobject<UXAttributeComponent>("AttributeComp");
 }
 
 // Called when the game starts or when spawned
@@ -74,7 +77,9 @@ void AXCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
 
 	PlayerInputComponent->BindAction("PrimaryAttack", IE_Pressed, this, &AXCharacter::PrimaryAttack);
+	PlayerInputComponent->BindAction("SecondaryAttack", IE_Pressed, this, &AXCharacter::SecondaryAttack);
 	PlayerInputComponent->BindAction("PlayerJump", IE_Pressed, this, &AXCharacter::PlayerJump);
+	PlayerInputComponent->BindAction("PlayerDash", IE_Pressed, this, &AXCharacter::PlayerDash);
 
 	PlayerInputComponent->BindAction("PrimaryInteract", IE_Pressed, this, &AXCharacter::PrimaryInteract);
 }
@@ -82,11 +87,19 @@ void AXCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 void AXCharacter::PrimaryAttack()
 {
 	PlayAnimMontage(AttackAnim);
-
-	GetWorldTimerManager().SetTimer(TimerHandle_PrimaryAttack, this, &AXCharacter::PrimaryAttack_TimeElapsed, 0.2f);
+	FTimerDelegate PrimaryAttackDelegate = FTimerDelegate::CreateUObject(this, &AXCharacter::PrimaryAttack_TimeElapsed, ProjectileClass);
+	GetWorldTimerManager().SetTimer(TimerHandle_PrimaryAttack, PrimaryAttackDelegate, 0.2f, false);
 	
 	//GetWorldTimerManager().ClearTimer(TimerHandle_PrimaryAttack);
 }
+
+void AXCharacter::SecondaryAttack()
+{
+	PlayAnimMontage(AttackAnim);
+	FTimerDelegate SecondaryAttackDelegate = FTimerDelegate::CreateUObject(this, &AXCharacter::PrimaryAttack_TimeElapsed, ProjectileBlackholeClass);
+	GetWorldTimerManager().SetTimer(TimerHandle_SecondaryAttack, SecondaryAttackDelegate, 0.2f, false);
+}
+
 
 void AXCharacter::PlayerJump()
 {
@@ -102,17 +115,18 @@ void AXCharacter::PrimaryInteract()
 		
 }
 
-void AXCharacter::PrimaryAttack_TimeElapsed()
+void AXCharacter::PrimaryAttack_TimeElapsed(TSubclassOf<AActor> Projectile)
 {
 	FCollisionObjectQueryParams ObjectQueryParams;
 	ObjectQueryParams.AddObjectTypesToQuery(ECC_WorldDynamic);
 	ObjectQueryParams.AddObjectTypesToQuery(ECC_WorldStatic);
+	ObjectQueryParams.AddObjectTypesToQuery(ECC_Pawn);
 	
 	FVector HandLocation = GetMesh()->GetSocketLocation("Muzzle_01");
 	FRotator CamRotation = CameraComp->GetComponentRotation();
 	FVector CamLocation = CameraComp->GetComponentLocation() + CamRotation.Vector() * SpringArmComp->TargetArmLength;
 
-	FVector EndLocation = CamLocation + CamRotation.Vector() * 1000;
+	FVector EndLocation = CamLocation + CamRotation.Vector() * 2000;
 	FVector AimLocation = EndLocation;
 
 	TArray<FHitResult> Hits;
@@ -144,7 +158,7 @@ void AXCharacter::PrimaryAttack_TimeElapsed()
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	SpawnParams.Instigator = this;
 	
-	GetWorld()->SpawnActor<AActor>(ProjectileClass, SpawnTM, SpawnParams);
+	LastProjectile = GetWorld()->SpawnActor<AActor>(Projectile, SpawnTM, SpawnParams);
 	
 	//AActor* SpawnedActor =  GetWorld()->SpawnActor<AActor>(ProjectileClass, SpawnTM, SpawnParams);
 	//AXMagicProjectile* SpawnedBall = Cast<AXMagicProjectile>(SpawnedActor);
@@ -161,4 +175,17 @@ float AXCharacter::GetSpringArmLength()
 UCameraComponent* AXCharacter::GetCamera()
 {
 	return CameraComp;
+}
+
+void AXCharacter::PlayerDash_TimeElapsed()
+{
+	this->SetActorTransform(LastProjectile->GetActorTransform());
+}
+
+void AXCharacter::PlayerDash()
+{
+	PlayAnimMontage(AttackAnim);
+	FTimerDelegate PrimaryDashDelegate = FTimerDelegate::CreateUObject(this, &AXCharacter::PrimaryAttack_TimeElapsed, DashProjectileClass);
+	GetWorldTimerManager().SetTimer(TimerHandle_Dash, PrimaryDashDelegate, 0.2f, false);
+	GetWorldTimerManager().SetTimer(TimerHandle_DashTransform, this, &AXCharacter::PlayerDash_TimeElapsed, 0.4f);
 }

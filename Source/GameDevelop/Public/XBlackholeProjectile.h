@@ -3,32 +3,39 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "XProjectileBase.h"
 #include "GameFramework/Actor.h"
-#include "XMagicProjectile.generated.h"
+#include "XProjectileBase.h"
+#include "XBlackholeProjectile.generated.h"
 
 class USphereComponent;
 class UProjectileMovementComponent;
 class UParticleSystemComponent;
+class URadialForceComponent;
 
 UCLASS()
-class GAMEDEVELOP_API AXMagicProjectile : public AXProjectileBase
+class GAMEDEVELOP_API AXBlackholeProjectile : public AXProjectileBase
 {
 	GENERATED_BODY()
 	
 public:	
 	// Sets default values for this actor's properties
-	AXMagicProjectile();
+	AXBlackholeProjectile();
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	
+	UPROPERTY(VisibleAnywhere)
+	URadialForceComponent* RadialForceComp;
 
-	UFUNCTION()
-	void OnActorOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult);
+	FTimerHandle TimerHandle_TimeoutDestroy;
 
-public:
-	USphereComponent* GetSphere();
+	FOverlapInfo OverlappedItems;
+	
+public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
+	void destorySelf();
+
 };

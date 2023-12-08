@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "XAttributeComponent.h"
 #include "GameFramework/Character.h"
 #include "XInteractionComponent.h"
 #include "XCharacter.generated.h"
@@ -11,6 +12,7 @@ class UCameraComponent;
 class USpringArmComponent;
 class UXInteractionComponent;
 class UAnimMontage;
+class UXAttributeComponent;
 
 UCLASS()
 class GAMEDEVELOP_API AXCharacter : public ACharacter
@@ -20,13 +22,27 @@ class GAMEDEVELOP_API AXCharacter : public ACharacter
 
 protected:
 
-	UPROPERTY(EditAnywhere, Category = "Attack")
+	UPROPERTY(EditAnywhere, Category = "Preload")
 	TSubclassOf<AActor> ProjectileClass;
 
-	UPROPERTY(EditAnywhere, Category = "Attack")
+	UPROPERTY(EditAnywhere, Category = "Preload")
+	TSubclassOf<AActor> ProjectileBlackholeClass;
+
+	UPROPERTY(EditAnywhere, Category = "Preload")
 	UAnimMontage* AttackAnim;
 
+	UPROPERTY(EditAnywhere, Category = "Preload")
+	TSubclassOf<AActor> DashProjectileClass;
+
+	AActor* LastProjectile;
+
 	FTimerHandle TimerHandle_PrimaryAttack;
+
+	FTimerHandle TimerHandle_SecondaryAttack;
+	
+	FTimerHandle TimerHandle_Dash;
+
+	FTimerHandle TimerHandle_DashTransform;
 
 public:
 	// Sets default values for this character's properties
@@ -43,6 +59,9 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	UXInteractionComponent* InteractionComp;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
+	UXAttributeComponent* AttributeComp;
+
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
@@ -56,7 +75,13 @@ protected:
 	
 	void PrimaryInteract();
 
-	void PrimaryAttack_TimeElapsed();
+	void PrimaryAttack_TimeElapsed(TSubclassOf<AActor> Projectile);
+
+	void SecondaryAttack();
+
+	void PlayerDash();
+
+	void PlayerDash_TimeElapsed();
 
 public:
 	float GetSpringArmLength();

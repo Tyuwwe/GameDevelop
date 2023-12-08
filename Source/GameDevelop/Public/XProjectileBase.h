@@ -3,32 +3,37 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "XProjectileBase.h"
 #include "GameFramework/Actor.h"
-#include "XMagicProjectile.generated.h"
+#include "XProjectileBase.generated.h"
 
 class USphereComponent;
 class UProjectileMovementComponent;
 class UParticleSystemComponent;
 
 UCLASS()
-class GAMEDEVELOP_API AXMagicProjectile : public AXProjectileBase
+class GAMEDEVELOP_API AXProjectileBase : public AActor
 {
 	GENERATED_BODY()
 	
 public:	
 	// Sets default values for this actor's properties
-	AXMagicProjectile();
+	AXProjectileBase();
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	UFUNCTION()
-	void OnActorOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult);
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+	USphereComponent* SphereComp;
 
-public:
-	USphereComponent* GetSphere();
+	UPROPERTY(VisibleAnywhere)
+	UProjectileMovementComponent* MovementComp;
+
+	UPROPERTY(VisibleAnywhere)
+	UParticleSystemComponent* EffectComp;
+
+public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
 };
